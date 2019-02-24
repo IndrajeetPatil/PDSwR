@@ -1,0 +1,68 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Choosing and evaluating models
+
+## Building and applying a logistic regression spam model
+
+```{r load}
+set.seed(123)
+library(tidyverse, warn.conflicts = FALSE)
+```
+
+Using logistic regression to classify emails into spam or non-spam:
+
+```{r listing_5.1}
+# reading the file containing spam data
+spamD <- readr::read_tsv("https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv")
+
+# creating training and testing datasets
+spamTrain <- dplyr::filter(.data = spamD, rgroup >= 10)
+spamTest <- dplyr::filter(.data = spamD, rgroup < 10)
+
+# training the model
+spamModel <- stats::glm(formula = spam =="spam" ~ .,
+           family = stats::binomial(link = "logit"),
+           data = dplyr::select(spamTrain, -rgroup))
+
+# looking at the result
+broom::tidy(spamModel)
+
+# looking at the model summary
+broom::glance(spamModel)
+
+# with predicted response on training data
+spamTrain <- broom::augment(
+  x = spamModel,
+  newdata = spamTrain,
+  type.predict = "response"
+)
+
+# with predicted response on test data
+spamTest <- broom::augment(
+  x = spamModel,
+  newdata = spamTest,
+  type.predict = "response"
+)
+
+# performance with the training data
+table(y = spamTrain$spam, glmPred = spamTrain$.fitted > 0.5)
+
+# performance with the test data
+table(y = spamTest$spam, glmPred = spamTest$.fitted > 0.5) 
+```
+
+Looking at actual and predicted sample responses
+
+```{r listing_5.2}
+sample <- spamTest[c(7,35,224,327), c('spam', '.fitted')]
+print(sample)
+```
+
+Spam confusion matrix
+```{r listing_5.3}
+# performance with the test data
+table(truth = spamTest$spam, prediction = spamTest$.fitted > 0.5) 
+```

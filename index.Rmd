@@ -1,0 +1,16 @@
+--- 
+title: "Practical Data Science with R - Tidyverse style"
+author: "Indrajeet Patil"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+description: "These are my notes while reading the book `Practical Data Science with R` - Tidyverse style"
+---
+
+# Introduction
+
+This is my attempt to convert all R code encountered in *Practical Data Science
+with R* to use tidyverse packages.
