@@ -48,10 +48,10 @@ spamTest <- broom::augment(
 )
 
 # performance with the training data
-table(y = spamTrain$spam, glmPred = spamTrain$.fitted > 0.5)
+train_perform <- table(y = spamTrain$spam, glmPred = spamTrain$.fitted > 0.5)
 
 # performance with the test data
-table(y = spamTest$spam, glmPred = spamTest$.fitted > 0.5) 
+test_perform <- table(y = spamTest$spam, glmPred = spamTest$.fitted > 0.5) 
 ```
 
 Looking at actual and predicted sample responses
@@ -61,8 +61,33 @@ sample <- spamTest[c(7,35,224,327), c('spam', '.fitted')]
 print(sample)
 ```
 
-Spam confusion matrix
+Spam confusion matrix (to assess performance of the model)
+
 ```{r listing_5.3}
 # performance with the test data
-table(truth = spamTest$spam, prediction = spamTest$.fitted > 0.5) 
+(cM <- table(truth = spamTest$spam, prediction = spamTest$.fitted > 0.5)) 
 ```
+
+Assessing the performance
+```{r new_5.1}
+# chaning column names to align with rownames
+colnames(cM) <- c("non-spam", "spam")
+
+# looking at performance measures
+caret::confusionMatrix(cM)
+```
+
+Entering data by hand (example of a good spam filter at WinVectorLLC blog)
+
+```{r listing_5.4}
+t <- as.table(matrix(data = c(288 - 1, 17, 1, 13882 - 17), nrow = 2, ncol = 2))
+
+rownames(t) <- rownames(cM)
+colnames(t) <- c("non-spam", "spam")
+
+# looking at performance measures
+caret::confusionMatrix(t)
+```
+
+Accuracy for our `glm`-based classifier was 92.14%, while it's 99.87% for a good
+classifier.

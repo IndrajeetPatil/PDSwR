@@ -160,17 +160,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2><span class="header-section-number">2.1</span> Building and applying a logistic regression spam model</h2>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">123</span>)
 <span class="kw">library</span>(tidyverse, <span class="dt">warn.conflicts =</span> <span class="ot">FALSE</span>)</code></pre>
-<pre><code>## Registered S3 method overwritten by &#39;rvest&#39;:
-##   method            from
-##   read_xml.response xml2</code></pre>
-<pre><code>## -- Attaching packages ---------------------------------------------------------------------------------------------- tidyverse 1.2.1 --</code></pre>
-<pre><code>## v ggplot2 3.1.0.9000     v purrr   0.3.0     
-## v tibble  2.0.1          v dplyr   0.8.0.9000
-## v tidyr   0.8.2          v stringr 1.4.0     
-## v readr   1.3.1          v forcats 0.4.0</code></pre>
-<pre><code>## -- Conflicts ------------------------------------------------------------------------------------------------- tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
 <p>Using logistic regression to classify emails into spam or non-spam:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># reading the file containing spam data</span>
 spamD &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_tsv</span>(<span class="st">&quot;https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv&quot;</span>)</code></pre>
@@ -226,17 +215,10 @@ spamTest &lt;-<span class="st"> </span>broom<span class="op">::</span><span clas
 )
 
 <span class="co"># performance with the training data</span>
-<span class="kw">table</span>(<span class="dt">y =</span> spamTrain<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTrain<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>)</code></pre>
-<pre><code>##           glmPred
-## y          FALSE TRUE
-##   non-spam  2396  114
-##   spam       178 1455</code></pre>
-<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># performance with the test data</span>
-<span class="kw">table</span>(<span class="dt">y =</span> spamTest<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>) </code></pre>
-<pre><code>##           glmPred
-## y          FALSE TRUE
-##   non-spam   264   14
-##   spam        22  158</code></pre>
+train_perform &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">y =</span> spamTrain<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTrain<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>)
+
+<span class="co"># performance with the test data</span>
+test_perform &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">y =</span> spamTest<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>) </code></pre>
 <p>Looking at actual and predicted sample responses</p>
 <pre class="sourceCode r"><code class="sourceCode r">sample &lt;-<span class="st"> </span>spamTest[<span class="kw">c</span>(<span class="dv">7</span>,<span class="dv">35</span>,<span class="dv">224</span>,<span class="dv">327</span>), <span class="kw">c</span>(<span class="st">&#39;spam&#39;</span>, <span class="st">&#39;.fitted&#39;</span>)]
 <span class="kw">print</span>(sample)</code></pre>
@@ -247,13 +229,80 @@ spamTest &lt;-<span class="st"> </span>broom<span class="op">::</span><span clas
 ## 2 spam     0.480   
 ## 3 non-spam 0.000685
 ## 4 non-spam 0.000143</code></pre>
-<p>Spam confusion matrix</p>
+<p>Spam confusion matrix (to assess performance of the model)</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># performance with the test data</span>
-<span class="kw">table</span>(<span class="dt">truth =</span> spamTest<span class="op">$</span>spam, <span class="dt">prediction =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>) </code></pre>
+(cM &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">truth =</span> spamTest<span class="op">$</span>spam, <span class="dt">prediction =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>)) </code></pre>
 <pre><code>##           prediction
 ## truth      FALSE TRUE
 ##   non-spam   264   14
 ##   spam        22  158</code></pre>
+<p>Assessing the performance</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># chaning column names to align with rownames</span>
+<span class="kw">colnames</span>(cM) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;non-spam&quot;</span>, <span class="st">&quot;spam&quot;</span>)
+
+<span class="co"># looking at performance measures</span>
+caret<span class="op">::</span><span class="kw">confusionMatrix</span>(cM)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           prediction
+## truth      non-spam spam
+##   non-spam      264   14
+##   spam           22  158
+##                                           
+##                Accuracy : 0.9214          
+##                  95% CI : (0.8928, 0.9443)
+##     No Information Rate : 0.6245          
+##     P-Value [Acc &gt; NIR] : &lt;2e-16          
+##                                           
+##                   Kappa : 0.834           
+##  Mcnemar&#39;s Test P-Value : 0.2433          
+##                                           
+##             Sensitivity : 0.9231          
+##             Specificity : 0.9186          
+##          Pos Pred Value : 0.9496          
+##          Neg Pred Value : 0.8778          
+##              Prevalence : 0.6245          
+##          Detection Rate : 0.5764          
+##    Detection Prevalence : 0.6070          
+##       Balanced Accuracy : 0.9208          
+##                                           
+##        &#39;Positive&#39; Class : non-spam        
+## </code></pre>
+<p>Entering data by hand (example of a good spam filter at WinVectorLLC blog)</p>
+<pre class="sourceCode r"><code class="sourceCode r">t &lt;-<span class="st"> </span><span class="kw">as.table</span>(<span class="kw">matrix</span>(<span class="dt">data =</span> <span class="kw">c</span>(<span class="dv">288</span> <span class="op">-</span><span class="st"> </span><span class="dv">1</span>, <span class="dv">17</span>, <span class="dv">1</span>, <span class="dv">13882</span> <span class="op">-</span><span class="st"> </span><span class="dv">17</span>), <span class="dt">nrow =</span> <span class="dv">2</span>, <span class="dt">ncol =</span> <span class="dv">2</span>))
+
+<span class="kw">rownames</span>(t) &lt;-<span class="st"> </span><span class="kw">rownames</span>(cM)
+<span class="kw">colnames</span>(t) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;non-spam&quot;</span>, <span class="st">&quot;spam&quot;</span>)
+
+<span class="co"># looking at performance measures</span>
+caret<span class="op">::</span><span class="kw">confusionMatrix</span>(t)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##          non-spam  spam
+## non-spam      287     1
+## spam           17 13865
+##                                          
+##                Accuracy : 0.9987         
+##                  95% CI : (0.998, 0.9992)
+##     No Information Rate : 0.9785         
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
+##                                          
+##                   Kappa : 0.9689         
+##  Mcnemar&#39;s Test P-Value : 0.000407       
+##                                          
+##             Sensitivity : 0.94408        
+##             Specificity : 0.99993        
+##          Pos Pred Value : 0.99653        
+##          Neg Pred Value : 0.99878        
+##              Prevalence : 0.02145        
+##          Detection Rate : 0.02025        
+##    Detection Prevalence : 0.02032        
+##       Balanced Accuracy : 0.97200        
+##                                          
+##        &#39;Positive&#39; Class : non-spam       
+## </code></pre>
+<p>Accuracy for our <code>glm</code>-based classifier was 92.14%, while it’s 99.87% for a good
+classifier.</p>
 
 </div>
 </div>
@@ -277,7 +326,7 @@ spamTest &lt;-<span class="st"> </span>broom<span class="op">::</span><span clas
 gitbook.require(["gitbook"], function(gitbook) {
 gitbook.start({
 "sharing": {
-"github": false,
+"github": true,
 "facebook": true,
 "twitter": true,
 "google": false,

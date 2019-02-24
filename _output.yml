@@ -1,6 +1,10 @@
 bookdown::gitbook:
   css: style.css
+  split_by: chapter
   config:
+    sharing:
+      github: yes
+      facebook: yes
     toc:
       before: |
         <li><a href="./">"Practical Data Science with R - Tidyverse style"</a></li>
@@ -12,5 +16,5 @@ bookdown::pdf_book:
     in_header: preamble.tex
   latex_engine: xelatex
   citation_package: natbib
-  keep_tex: yes
-bookdown::epub_book: default
+bookdown::epub_book:
+  stylesheet: style.css
