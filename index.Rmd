@@ -12,5 +12,5 @@ description: "These are my notes while reading the book `Practical Data Science 
 
 # Introduction
 
-This is my attempt to convert all R code encountered in *Practical Data Science
-with R* to use tidyverse packages.
+This attempt to convert all code encountered in *Practical Data Science with R*
+book by Nina Zumel and John Mount to use tidyverse packages.

@@ -132,7 +132,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="divider"></li>
 <li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a></li>
 <li class="chapter" data-level="2" data-path="choosing-and-evaluating-models.html"><a href="choosing-and-evaluating-models.html"><i class="fa fa-check"></i><b>2</b> Choosing and evaluating models</a><ul>
-<li class="chapter" data-level="2.1" data-path="choosing-and-evaluating-models.html"><a href="choosing-and-evaluating-models.html#building-and-applying-a-logistic-regression-spam-model"><i class="fa fa-check"></i><b>2.1</b> Building and applying a logistic regression spam model</a></li>
+<li class="chapter" data-level="2.1" data-path="choosing-and-evaluating-models.html"><a href="choosing-and-evaluating-models.html#evaluating-models-classification"><i class="fa fa-check"></i><b>2.1</b> Evaluating models: classification</a></li>
+<li class="chapter" data-level="2.2" data-path="choosing-and-evaluating-models.html"><a href="choosing-and-evaluating-models.html#evaluating-models-scoring-methods"><i class="fa fa-check"></i><b>2.2</b> Evaluating models: scoring methods</a></li>
+<li class="chapter" data-level="2.3" data-path="choosing-and-evaluating-models.html"><a href="choosing-and-evaluating-models.html#evaluating-models-probability-estimation"><i class="fa fa-check"></i><b>2.3</b> Evaluating models: probability estimation</a></li>
+<li class="chapter" data-level="2.4" data-path="choosing-and-evaluating-models.html"><a href="choosing-and-evaluating-models.html#evaluating-models-clustering"><i class="fa fa-check"></i><b>2.4</b> Evaluating models: clustering</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -156,13 +159,17 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="choosing-and-evaluating-models" class="section level1">
 <h1><span class="header-section-number">Chapter 2</span> Choosing and evaluating models</h1>
-<div id="building-and-applying-a-logistic-regression-spam-model" class="section level2">
-<h2><span class="header-section-number">2.1</span> Building and applying a logistic regression spam model</h2>
+<div id="evaluating-models-classification" class="section level2">
+<h2><span class="header-section-number">2.1</span> Evaluating models: classification</h2>
+<p>Building and applying a logistic regression spam model</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">123</span>)
-<span class="kw">library</span>(tidyverse, <span class="dt">warn.conflicts =</span> <span class="ot">FALSE</span>)</code></pre>
+<span class="kw">library</span>(tidyverse, <span class="dt">warn.conflicts =</span> <span class="ot">FALSE</span>)
+<span class="kw">library</span>(tidymodels, <span class="dt">warn.conflicts =</span> <span class="ot">FALSE</span>)</code></pre>
 <p>Using logistic regression to classify emails into spam or non-spam:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># reading the file containing spam data</span>
-spamD &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_tsv</span>(<span class="st">&quot;https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv&quot;</span>)</code></pre>
+spamD &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_tsv</span>(
+  <span class="st">&quot;https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv&quot;</span>
+)</code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   .default = col_double(),
@@ -174,9 +181,11 @@ spamTrain &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span cla
 spamTest &lt;-<span class="st"> </span>dplyr<span class="op">::</span><span class="kw">filter</span>(<span class="dt">.data =</span> spamD, rgroup <span class="op">&lt;</span><span class="st"> </span><span class="dv">10</span>)
 
 <span class="co"># training the model</span>
-spamModel &lt;-<span class="st"> </span>stats<span class="op">::</span><span class="kw">glm</span>(<span class="dt">formula =</span> spam <span class="op">==</span><span class="st">&quot;spam&quot;</span> <span class="op">~</span><span class="st"> </span>.,
-           <span class="dt">family =</span> stats<span class="op">::</span><span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>),
-           <span class="dt">data =</span> dplyr<span class="op">::</span><span class="kw">select</span>(spamTrain, <span class="op">-</span>rgroup))</code></pre>
+spamModel &lt;-<span class="st"> </span>stats<span class="op">::</span><span class="kw">glm</span>(
+  <span class="dt">formula =</span> spam <span class="op">==</span><span class="st"> &quot;spam&quot;</span> <span class="op">~</span><span class="st"> </span>.,
+  <span class="dt">family =</span> stats<span class="op">::</span><span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>),
+  <span class="dt">data =</span> dplyr<span class="op">::</span><span class="kw">select</span>(spamTrain, <span class="op">-</span>rgroup)
+)</code></pre>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># looking at the result</span>
 broom<span class="op">::</span><span class="kw">tidy</span>(spamModel)</code></pre>
@@ -216,11 +225,40 @@ spamTest &lt;-<span class="st"> </span>broom<span class="op">::</span><span clas
 
 <span class="co"># performance with the training data</span>
 train_perform &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">y =</span> spamTrain<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTrain<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>)
+<span class="kw">colnames</span>(train_perform) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;non-spam&quot;</span>, <span class="st">&quot;spam&quot;</span>)
 
-<span class="co"># performance with the test data</span>
-test_perform &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">y =</span> spamTest<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>) </code></pre>
+<span class="co"># looking at performance measures</span>
+caret<span class="op">::</span><span class="kw">confusionMatrix</span>(train_perform)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           glmPred
+## y          non-spam spam
+##   non-spam     2396  114
+##   spam          178 1455
+##                                           
+##                Accuracy : 0.9295          
+##                  95% CI : (0.9213, 0.9371)
+##     No Information Rate : 0.6213          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.8514          
+##  Mcnemar&#39;s Test P-Value : 0.0002271       
+##                                           
+##             Sensitivity : 0.9308          
+##             Specificity : 0.9273          
+##          Pos Pred Value : 0.9546          
+##          Neg Pred Value : 0.8910          
+##              Prevalence : 0.6213          
+##          Detection Rate : 0.5783          
+##    Detection Prevalence : 0.6058          
+##       Balanced Accuracy : 0.9291          
+##                                           
+##        &#39;Positive&#39; Class : non-spam        
+## </code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># performance with the test data</span>
+test_perform &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">y =</span> spamTest<span class="op">$</span>spam, <span class="dt">glmPred =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>)</code></pre>
 <p>Looking at actual and predicted sample responses</p>
-<pre class="sourceCode r"><code class="sourceCode r">sample &lt;-<span class="st"> </span>spamTest[<span class="kw">c</span>(<span class="dv">7</span>,<span class="dv">35</span>,<span class="dv">224</span>,<span class="dv">327</span>), <span class="kw">c</span>(<span class="st">&#39;spam&#39;</span>, <span class="st">&#39;.fitted&#39;</span>)]
+<pre class="sourceCode r"><code class="sourceCode r">sample &lt;-<span class="st"> </span>spamTest[<span class="kw">c</span>(<span class="dv">7</span>, <span class="dv">35</span>, <span class="dv">224</span>, <span class="dv">327</span>), <span class="kw">c</span>(<span class="st">&quot;spam&quot;</span>, <span class="st">&quot;.fitted&quot;</span>)]
 <span class="kw">print</span>(sample)</code></pre>
 <pre><code>## # A tibble: 4 x 2
 ##   spam      .fitted
@@ -231,7 +269,7 @@ test_perform &lt;-<span class="st"> </span><span class="kw">table</span>(<span c
 ## 4 non-spam 0.000143</code></pre>
 <p>Spam confusion matrix (to assess performance of the model)</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># performance with the test data</span>
-(cM &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">truth =</span> spamTest<span class="op">$</span>spam, <span class="dt">prediction =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>)) </code></pre>
+(cM &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="dt">truth =</span> spamTest<span class="op">$</span>spam, <span class="dt">prediction =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>))</code></pre>
 <pre><code>##           prediction
 ## truth      FALSE TRUE
 ##   non-spam   264   14
@@ -303,6 +341,180 @@ caret<span class="op">::</span><span class="kw">confusionMatrix</span>(t)</code>
 ## </code></pre>
 <p>Accuracy for our <code>glm</code>-based classifier was 92.14%, while it’s 99.87% for a good
 classifier.</p>
+</div>
+<div id="evaluating-models-scoring-methods" class="section level2">
+<h2><span class="header-section-number">2.2</span> Evaluating models: scoring methods</h2>
+<p>Plotting residuals for evaluating scoring methods</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># making a dataframe</span>
+d &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">y =</span> (<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>)<span class="op">^</span><span class="dv">2</span>, <span class="dt">x =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>)
+
+<span class="co"># augmented dataframe for a linear model</span>
+d &lt;-<span class="st"> </span>broom<span class="op">::</span><span class="kw">augment</span>(
+  <span class="dt">x =</span> stats<span class="op">::</span><span class="kw">lm</span>(y <span class="op">~</span><span class="st"> </span>x, <span class="dt">data =</span> d),
+  <span class="dt">newdata =</span> d
+)
+
+<span class="co"># plot</span>
+<span class="kw">ggplot</span>(<span class="dt">data =</span> d) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> .fitted), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> .fitted, <span class="dt">yend =</span> y, <span class="dt">xend =</span> x)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="st">&quot;&quot;</span>)</code></pre>
+<p><img src="PDSwR_files/figure-html/listing_5.5-1.png" width="672" /></p>
+</div>
+<div id="evaluating-models-probability-estimation" class="section level2">
+<h2><span class="header-section-number">2.3</span> Evaluating models: probability estimation</h2>
+<p>Double density plot for evaluating probability methods</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> spamTest) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_density</span>(<span class="kw">aes</span>(<span class="dt">x =</span> .fitted, <span class="dt">color =</span> spam, <span class="dt">linetype =</span> spam))</code></pre>
+<p><img src="PDSwR_files/figure-html/listing_5.6-1.png" width="672" /></p>
+<p>Plotting the receiver operating characteristic (ROC) curve for evaluating
+probability methods</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(pROC))
+
+<span class="co"># AUC</span>
+(roc_object &lt;-<span class="st"> </span>pROC<span class="op">::</span><span class="kw">roc</span>(<span class="dt">response =</span> spamTest<span class="op">$</span>spam, <span class="dt">predictor =</span> spamTest<span class="op">$</span>.fitted))</code></pre>
+<pre><code>## 
+## Call:
+## roc.default(response = spamTest$spam, predictor = spamTest$.fitted)
+## 
+## Data: spamTest$.fitted in 278 controls (spamTest$spam non-spam) &lt; 180 cases (spamTest$spam spam).
+## Area under the curve: 0.966</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot with ggplot</span>
+pROC<span class="op">::</span><span class="kw">ggroc</span>(roc_object) <span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(
+    <span class="dt">title =</span> <span class="st">&quot;ROC curve&quot;</span>,
+    <span class="dt">x =</span> <span class="st">&quot;False Positive Rate (1-Specificity)&quot;</span>,
+    <span class="dt">y =</span> <span class="st">&quot;True Positive Rate (Sensitivity)&quot;</span>
+  )</code></pre>
+<p><img src="PDSwR_files/figure-html/listing_5.7-1.png" width="672" /></p>
+<p>Calculating log likelihood</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># model log likelihood the model assigns to the test data</span>
+<span class="kw">sum</span>(base<span class="op">::</span><span class="kw">ifelse</span>(
+  <span class="dt">test =</span> spamTest<span class="op">$</span>spam <span class="op">==</span><span class="st"> &quot;spam&quot;</span>,
+  <span class="dt">yes =</span> <span class="kw">log</span>(spamTest<span class="op">$</span>.fitted),
+  <span class="dt">no =</span> <span class="kw">log</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>spamTest<span class="op">$</span>.fitted)
+))</code></pre>
+<pre><code>## [1] -134.9478</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># log likelihood rescaled by the number of data points</span>
+<span class="kw">sum</span>(base<span class="op">::</span><span class="kw">ifelse</span>(
+  <span class="dt">test =</span> spamTest<span class="op">$</span>spam <span class="op">==</span><span class="st"> &quot;spam&quot;</span>,
+  <span class="dt">yes =</span> <span class="kw">log</span>(spamTest<span class="op">$</span>.fitted),
+  <span class="dt">no =</span> <span class="kw">log</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>spamTest<span class="op">$</span>.fitted)
+)) <span class="op">/</span><span class="st"> </span><span class="kw">dim</span>(spamTest)[[<span class="dv">1</span>]]</code></pre>
+<pre><code>## [1] -0.2946458</code></pre>
+<p>Computing the null model’s log likelihood
+(if the model is a good explanation, then the data should
+look likely (not implausible) under the model)</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># null model</span>
+pNull &lt;-
+<span class="st">  </span><span class="kw">sum</span>(base<span class="op">::</span><span class="kw">ifelse</span>(
+    <span class="dt">test =</span> spamTest<span class="op">$</span>spam <span class="op">==</span><span class="st"> &quot;spam&quot;</span>,
+    <span class="dt">yes =</span> <span class="dv">1</span>,
+    <span class="dt">no =</span> <span class="dv">0</span>
+  )) <span class="op">/</span><span class="st"> </span><span class="kw">dim</span>(spamTest)[[<span class="dv">1</span>]]
+
+<span class="co"># null model LL</span>
+<span class="kw">sum</span>(base<span class="op">::</span><span class="kw">ifelse</span>(
+  <span class="dt">test =</span> spamTest<span class="op">$</span>spam <span class="op">==</span><span class="st"> &quot;spam&quot;</span>,
+  <span class="dt">yes =</span> <span class="dv">1</span>,
+  <span class="dt">no =</span> <span class="dv">0</span>
+)) <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(pNull) <span class="op">+</span>
+<span class="st">  </span><span class="kw">sum</span>(base<span class="op">::</span><span class="kw">ifelse</span>(
+    <span class="dt">test =</span> spamTest<span class="op">$</span>spam <span class="op">==</span><span class="st"> &quot;spam&quot;</span>,
+    <span class="dt">yes =</span> <span class="dv">0</span>,
+    <span class="dt">no =</span> <span class="dv">1</span>
+  )) <span class="op">*</span><span class="st"> </span><span class="kw">log</span>(<span class="dv">1</span> <span class="op">-</span><span class="st"> </span>pNull)</code></pre>
+<pre><code>## [1] -306.8952</code></pre>
+<p>Calculating entropy and conditional entropy</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">suppressPackageStartupMessages</span>(<span class="kw">library</span>(DescTools))
+
+DescTools<span class="op">::</span><span class="kw">Entropy</span>(<span class="dt">x =</span> <span class="kw">table</span>(spamTest<span class="op">$</span>spam))</code></pre>
+<pre><code>## [1] 0.9667165</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># custom function to compute conditional entropy from the book</span>
+conditionalEntropy &lt;-<span class="st"> </span><span class="cf">function</span>(t) {
+  (<span class="kw">sum</span>(t[, <span class="dv">1</span>]) <span class="op">*</span><span class="st"> </span>DescTools<span class="op">::</span><span class="kw">Entropy</span>(t[, <span class="dv">1</span>]) <span class="op">+</span>
+<span class="st">    </span><span class="kw">sum</span>(t[, <span class="dv">2</span>]) <span class="op">*</span><span class="st"> </span>DescTools<span class="op">::</span><span class="kw">Entropy</span>(t[, <span class="dv">2</span>])) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(t)
+}
+
+<span class="kw">print</span>(<span class="kw">conditionalEntropy</span>(cM))</code></pre>
+<pre><code>## [1] 0.3971897</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># package function to do the same</span>
+infotheo<span class="op">::</span><span class="kw">condentropy</span>(
+  <span class="dt">X =</span> spamTest<span class="op">$</span>.fitted <span class="op">&gt;</span><span class="st"> </span><span class="fl">0.5</span>,
+  <span class="dt">Y =</span> spamTest<span class="op">$</span>spam,
+  <span class="dt">method =</span> <span class="st">&quot;emp&quot;</span>
+)</code></pre>
+<pre><code>## [1] 0.2670755</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># not sure why the different results</span></code></pre>
+</div>
+<div id="evaluating-models-clustering" class="section level2">
+<h2><span class="header-section-number">2.4</span> Evaluating models: clustering</h2>
+<p>Clustering random data in the plane</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">32297</span>)
+d &lt;-<span class="st"> </span>tibble<span class="op">::</span><span class="kw">as_tibble</span>(<span class="kw">data.frame</span>(<span class="dt">x =</span> <span class="kw">runif</span>(<span class="dv">100</span>), <span class="dt">y =</span> <span class="kw">runif</span>(<span class="dv">100</span>)))
+clus &lt;-<span class="st"> </span>stats<span class="op">::</span><span class="kw">kmeans</span>(<span class="dt">x =</span> d, <span class="dt">centers =</span> <span class="dv">5</span>)
+
+<span class="co"># getting cluster assignment as a column (currently, this doesn&#39;t work)</span>
+<span class="co"># d &lt;- broom::augment(x = clus, data = d)</span>
+
+<span class="co"># cluster assignment column</span>
+d<span class="op">$</span>cluster &lt;-<span class="st"> </span>clus<span class="op">$</span>cluster
+
+<span class="co"># calculating the size of each cluster</span>
+<span class="kw">table</span>(d<span class="op">$</span>cluster)</code></pre>
+<pre><code>## 
+##  1  2  3  4  5 
+## 10 27 18 17 28</code></pre>
+<p>Plotting our clusters</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(grDevices)
+
+<span class="co"># custom function for computing coordinates for drawing polygons</span>
+<span class="co"># `chull` function computes the subset of points which lie on the convex hull of</span>
+<span class="co"># the set of points specified</span>
+poly_coords &lt;-<span class="st"> </span><span class="cf">function</span>(c) {
+  f &lt;-<span class="st"> </span><span class="kw">subset</span>(d, cluster <span class="op">==</span><span class="st"> </span>c)
+  f[grDevices<span class="op">::</span><span class="kw">chull</span>(f), ]
+}
+
+<span class="co"># dataframe with coordinates</span>
+h &lt;-<span class="st"> </span>purrr<span class="op">::</span><span class="kw">map_dfr</span>(<span class="dt">.x =</span> <span class="kw">unique</span>(clus<span class="op">$</span>cluster), 
+                    <span class="dt">.f =</span> <span class="op">~</span><span class="st"> </span><span class="kw">poly_coords</span>(<span class="dt">c =</span> .))
+
+<span class="co"># plot</span>
+<span class="kw">ggplot</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_text</span>(<span class="dt">data =</span> d,
+            <span class="kw">aes</span>(
+              <span class="dt">label =</span> cluster,
+              <span class="dt">x =</span> x,
+              <span class="dt">y =</span> y,
+              <span class="dt">color =</span> cluster
+            ),
+            <span class="dt">size =</span> <span class="dv">3</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_polygon</span>(
+    <span class="dt">data =</span> h,
+    <span class="kw">aes</span>(
+      <span class="dt">x =</span> x,
+      <span class="dt">y =</span> y,
+      <span class="dt">group =</span> cluster,
+      <span class="dt">fill =</span> <span class="kw">as.factor</span>(cluster)
+    ),
+    <span class="dt">alpha =</span> <span class="fl">0.4</span>,
+    <span class="dt">linetype =</span> <span class="dv">0</span>
+  ) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="st">&quot;none&quot;</span>)</code></pre>
+<p><img src="PDSwR_files/figure-html/listing_5.12-1.png" width="672" /></p>
+<p>Calculating the typical distance between items in every pair of clusters</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># library(reshape2)</span>
+<span class="co"># n &lt;- dim(d)[[1]]</span>
+<span class="co"># pairs &lt;- data.frame(</span>
+<span class="co">#   ca = as.vector(outer(1:n, 1:n, function(a, b) d[a, &quot;cluster&quot;])),</span>
+<span class="co">#   cb = as.vector(outer(1:n, 1:n, function(a, b) d[b, &quot;cluster&quot;])),</span>
+<span class="co">#   dist = as.vector(outer(1:n, 1:n, function(a, b)</span>
+<span class="co">#     sqrt((d[a, &quot;x&quot;] - d[b, &quot;x&quot;])^2 + (d[a, &quot;y&quot;] - d[b, &quot;y&quot;])^2)))</span>
+<span class="co"># )</span>
+<span class="co"># </span>
+<span class="co"># dcast(pairs, ca ~ cb, value.var = &quot;dist&quot;, mean)</span></code></pre>
 
 </div>
 </div>

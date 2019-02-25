@@ -5,27 +5,34 @@ output:
 ---
 # Choosing and evaluating models
 
-## Building and applying a logistic regression spam model
+## Evaluating models: classification
 
-```{r load}
+Building and applying a logistic regression spam model
+
+```{r load, message=FALSE, warning=FALSE}
 set.seed(123)
 library(tidyverse, warn.conflicts = FALSE)
+library(tidymodels, warn.conflicts = FALSE)
 ```
 
 Using logistic regression to classify emails into spam or non-spam:
 
 ```{r listing_5.1}
 # reading the file containing spam data
-spamD <- readr::read_tsv("https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv")
+spamD <- readr::read_tsv(
+  "https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv"
+)
 
 # creating training and testing datasets
 spamTrain <- dplyr::filter(.data = spamD, rgroup >= 10)
 spamTest <- dplyr::filter(.data = spamD, rgroup < 10)
 
 # training the model
-spamModel <- stats::glm(formula = spam =="spam" ~ .,
-           family = stats::binomial(link = "logit"),
-           data = dplyr::select(spamTrain, -rgroup))
+spamModel <- stats::glm(
+  formula = spam == "spam" ~ .,
+  family = stats::binomial(link = "logit"),
+  data = dplyr::select(spamTrain, -rgroup)
+)
 
 # looking at the result
 broom::tidy(spamModel)
@@ -49,15 +56,19 @@ spamTest <- broom::augment(
 
 # performance with the training data
 train_perform <- table(y = spamTrain$spam, glmPred = spamTrain$.fitted > 0.5)
+colnames(train_perform) <- c("non-spam", "spam")
+
+# looking at performance measures
+caret::confusionMatrix(train_perform)
 
 # performance with the test data
-test_perform <- table(y = spamTest$spam, glmPred = spamTest$.fitted > 0.5) 
+test_perform <- table(y = spamTest$spam, glmPred = spamTest$.fitted > 0.5)
 ```
 
 Looking at actual and predicted sample responses
 
 ```{r listing_5.2}
-sample <- spamTest[c(7,35,224,327), c('spam', '.fitted')]
+sample <- spamTest[c(7, 35, 224, 327), c("spam", ".fitted")]
 print(sample)
 ```
 
@@ -65,10 +76,11 @@ Spam confusion matrix (to assess performance of the model)
 
 ```{r listing_5.3}
 # performance with the test data
-(cM <- table(truth = spamTest$spam, prediction = spamTest$.fitted > 0.5)) 
+(cM <- table(truth = spamTest$spam, prediction = spamTest$.fitted > 0.5))
 ```
 
 Assessing the performance
+
 ```{r new_5.1}
 # chaning column names to align with rownames
 colnames(cM) <- c("non-spam", "spam")
@@ -91,3 +103,196 @@ caret::confusionMatrix(t)
 
 Accuracy for our `glm`-based classifier was 92.14%, while it's 99.87% for a good
 classifier.
+
+## Evaluating models: scoring methods
+
+Plotting residuals for evaluating scoring methods
+
+```{r listing_5.5}
+# making a dataframe
+d <- data.frame(y = (1:10)^2, x = 1:10)
+
+# augmented dataframe for a linear model
+d <- broom::augment(
+  x = stats::lm(y ~ x, data = d),
+  newdata = d
+)
+
+# plot
+ggplot(data = d) +
+  geom_point(aes(x = x, y = y)) +
+  geom_line(aes(x = x, y = .fitted), color = "blue") +
+  geom_segment(aes(x = x, y = .fitted, yend = y, xend = x)) +
+  scale_y_continuous("")
+```
+
+## Evaluating models: probability estimation
+
+Double density plot for evaluating probability methods
+
+```{r listing_5.6}
+ggplot(data = spamTest) +
+  geom_density(aes(x = .fitted, color = spam, linetype = spam))
+```
+
+Plotting the receiver operating characteristic (ROC) curve for evaluating
+probability methods
+
+```{r listing_5.7}
+suppressPackageStartupMessages(library(pROC))
+
+# AUC
+(roc_object <- pROC::roc(response = spamTest$spam, predictor = spamTest$.fitted))
+
+# plot with ggplot
+pROC::ggroc(roc_object) +
+  labs(
+    title = "ROC curve",
+    x = "False Positive Rate (1-Specificity)",
+    y = "True Positive Rate (Sensitivity)"
+  )
+```
+
+Calculating log likelihood
+
+```{r listing_5.8}
+# model log likelihood the model assigns to the test data
+sum(base::ifelse(
+  test = spamTest$spam == "spam",
+  yes = log(spamTest$.fitted),
+  no = log(1 - spamTest$.fitted)
+))
+
+# log likelihood rescaled by the number of data points
+sum(base::ifelse(
+  test = spamTest$spam == "spam",
+  yes = log(spamTest$.fitted),
+  no = log(1 - spamTest$.fitted)
+)) / dim(spamTest)[[1]]
+```
+
+Computing the null model’s log likelihood
+(if the model is a good explanation, then the data should
+look likely (not implausible) under the model)
+
+```{r listing_5.9}
+# null model
+pNull <-
+  sum(base::ifelse(
+    test = spamTest$spam == "spam",
+    yes = 1,
+    no = 0
+  )) / dim(spamTest)[[1]]
+
+# null model LL
+sum(base::ifelse(
+  test = spamTest$spam == "spam",
+  yes = 1,
+  no = 0
+)) * log(pNull) +
+  sum(base::ifelse(
+    test = spamTest$spam == "spam",
+    yes = 0,
+    no = 1
+  )) * log(1 - pNull)
+```
+
+Calculating entropy and conditional entropy
+
+```{r listing_5.10, message = FALSE, warning = FALSE}
+suppressPackageStartupMessages(library(DescTools))
+
+DescTools::Entropy(x = table(spamTest$spam))
+
+# custom function to compute conditional entropy from the book
+conditionalEntropy <- function(t) {
+  (sum(t[, 1]) * DescTools::Entropy(t[, 1]) +
+    sum(t[, 2]) * DescTools::Entropy(t[, 2])) / sum(t)
+}
+
+print(conditionalEntropy(cM))
+
+# package function to do the same
+infotheo::condentropy(
+  X = spamTest$.fitted > 0.5,
+  Y = spamTest$spam,
+  method = "emp"
+)
+
+# not sure why the different results
+```
+
+## Evaluating models: clustering
+
+Clustering random data in the plane
+
+```{r listing_5.11}
+set.seed(32297)
+d <- tibble::as_tibble(data.frame(x = runif(100), y = runif(100)))
+clus <- stats::kmeans(x = d, centers = 5)
+
+# getting cluster assignment as a column (currently, this doesn't work)
+# d <- broom::augment(x = clus, data = d)
+
+# cluster assignment column
+d$cluster <- clus$cluster
+
+# calculating the size of each cluster
+table(d$cluster)
+```
+
+Plotting our clusters
+
+```{r listing_5.12}
+library(grDevices)
+
+# custom function for computing coordinates for drawing polygons
+# `chull` function computes the subset of points which lie on the convex hull of
+# the set of points specified
+poly_coords <- function(c) {
+  f <- subset(d, cluster == c)
+  f[grDevices::chull(f), ]
+}
+
+# dataframe with coordinates
+h <- purrr::map_dfr(.x = unique(clus$cluster), 
+                    .f = ~ poly_coords(c = .))
+
+# plot
+ggplot() +
+  geom_text(data = d,
+            aes(
+              label = cluster,
+              x = x,
+              y = y,
+              color = cluster
+            ),
+            size = 3) +
+  geom_polygon(
+    data = h,
+    aes(
+      x = x,
+      y = y,
+      group = cluster,
+      fill = as.factor(cluster)
+    ),
+    alpha = 0.4,
+    linetype = 0
+  ) +
+  theme(legend.position = "none")
+```
+
+Calculating the typical distance between items in every pair of clusters
+
+```{r listing_5.14}
+# library(reshape2)
+# n <- dim(d)[[1]]
+# pairs <- data.frame(
+#   ca = as.vector(outer(1:n, 1:n, function(a, b) d[a, "cluster"])),
+#   cb = as.vector(outer(1:n, 1:n, function(a, b) d[b, "cluster"])),
+#   dist = as.vector(outer(1:n, 1:n, function(a, b)
+#     sqrt((d[a, "x"] - d[b, "x"])^2 + (d[a, "y"] - d[b, "y"])^2)))
+# )
+# 
+# dcast(pairs, ca ~ cb, value.var = "dist", mean)
+```
