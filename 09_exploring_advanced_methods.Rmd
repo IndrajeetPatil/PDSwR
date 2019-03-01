@@ -1,0 +1,43 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Exploring advanced methods
+
+## Reducing training variance with bagging and random forests
+
+Evaluating the performance of decision trees
+
+```{r load9, message=FALSE, warning=FALSE}
+set.seed(123)
+library(tidyverse, warn.conflicts = FALSE)
+library(tidymodels, warn.conflicts = FALSE)
+```
+
+Using logistic regression to classify emails into spam or non-spam:
+
+```{r listing_9.1}
+# needed libraries
+library(rpart, warn.conflicts = FALSE)
+#remotes::install_github("njtierney/broomstick")
+library(broomstick)
+
+# reading the file containing spam data
+spamD <- readr::read_tsv(
+  "https://raw.githubusercontent.com/WinVector/zmPDSwR/master/Spambase/spamD.tsv"
+)
+
+# creating training and testing datasets
+spamTrain <- dplyr::filter(.data = spamD, rgroup >= 10)
+spamTest <- dplyr::filter(.data = spamD, rgroup < 10)
+
+# training the model
+treemodel <- rpart::rpart(formula = spam == "spam" ~ ., 
+                          data = dplyr::select(spamTrain, -rgroup))
+
+# tidy output
+broomstick::tidy(treemodel)
+```
+
